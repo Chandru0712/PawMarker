@@ -1,0 +1,18 @@
+{
+  "appId": "com.pawmarker.app",
+  "appName": "PawMarker",
+  "webDir": "../../packages/app/dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "buildOptions": {
+      "releaseType": "APK"
+    }
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}

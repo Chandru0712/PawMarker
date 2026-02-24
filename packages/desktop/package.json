@@ -1,0 +1,46 @@
+{
+  "name": "@pawmarker/desktop",
+  "version": "1.0.0",
+  "main": "src/main.js",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development electron .",
+    "build": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4",
+    "cross-env": "^7.0.3"
+  },
+  "dependencies": {},
+  "build": {
+    "appId": "com.pawmarker.app",
+    "productName": "PawMarker",
+    "files": [
+      "src/**/*",
+      "package.json",
+      {
+        "from": "../app/dist",
+        "to": "app/dist",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "directories": {
+      "buildResources": "assets"
+    },
+    "win": {
+      "target": [
+        "portable",
+        "installer"
+      ]
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

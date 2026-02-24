@@ -1,0 +1,34 @@
+node_modules/
+dist/
+build/
+*.apk
+*.aab
+.gradle/
+.DS_Store
+*.log
+.env
+.env.local
+.idea/
+.vscode/
+*.swp
+*.swo
+~*
+
+# Electron
+dist-electron/
+
+# Build outputs
+out/
+release/
+
+# Android
+packages/mobile/android/.gradle
+packages/mobile/android/app/build
+packages/mobile/android/local.properties
+packages/mobile/android/key.properties
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
