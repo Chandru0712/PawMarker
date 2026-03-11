@@ -117,6 +117,67 @@ body {
   z-index: 100;
 }
 
+.countdown-indicator {
+  position: fixed;
+  right: 2rem;
+  bottom: 2rem;
+  z-index: 9999;
+  min-width: 8rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  color: #ffffff;
+  line-height: 1.1;
+  text-align: center;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.countdown-label {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.92;
+}
+
+.countdown-number {
+  font-size: 4.6rem;
+  font-weight: 700;
+}
+
+.countdown-go-text {
+  font-size: 4.2rem;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.countdown-indicator.go {
+  border-color: rgba(70, 255, 130, 0.7);
+  background: rgba(10, 60, 25, 0.46);
+  box-shadow: 0 12px 32px rgba(48, 230, 108, 0.28);
+  justify-content: center;
+  min-height: 8rem;
+}
+
+.countdown-indicator.go .countdown-label,
+.countdown-indicator.go .countdown-number {
+  color: #93ffb7;
+}
+
+.countdown-indicator.go .countdown-go-text {
+  color: #93ffb7;
+}
+
 .sound-button {
   background: rgba(0, 0, 0, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.2);

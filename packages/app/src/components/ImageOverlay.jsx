@@ -79,16 +79,34 @@ const CONTAINERS = [
 const AUTO_ROTATE_DELAY = 5000; // 5 seconds
 const TOTAL_OBJECT_IMAGES = 3; // Number of rotating images per container
 const SOUND_VOLUME = 0.7; // Sound volume (0.0 to 1.0)
+const COUNTDOWN_START = 8;
+const COUNTDOWN_INTERVAL = 1000;
+const GO_DISPLAY_DURATION = 5200; // milliseconds
+const INACTIVITY_TIMEOUT_MINUTES = 5;
+const INACTIVITY_TIMEOUT = INACTIVITY_TIMEOUT_MINUTES * 60 * 1000;
+
+const getContainerIndexFromKeyEvent = (event) => {
+  if (/^[0-9]$/.test(event.key)) {
+    return event.key === "0" ? 9 : parseInt(event.key, 10) - 1;
+  }
+
+  if (/^Numpad[0-9]$/.test(event.code)) {
+    const digit = event.code.replace("Numpad", "");
+    return digit === "0" ? 9 : parseInt(digit, 10) - 1;
+  }
+
+  return null;
+};
 
 // Preload images efficiently - plain function, not hook
 const preloadImagesBatch = (containerIndex) => {
   const container = CONTAINERS[containerIndex];
   const imagesToPreload = [
-    `${container.folder}/T_Content.PNG`,
-    `${container.folder}/1st.PNG`,
-    `${container.folder}/2nd.PNG`,
-    `${container.folder}/3rd.PNG`,
-    `${container.folder}/T_Frame.PNG`,
+    `${container.folder}/T_Content.webp`,
+    `${container.folder}/1st.webp`,
+    `${container.folder}/2nd.webp`,
+    `${container.folder}/3rd.webp`,
+    `${container.folder}/T_Frame.webp`,
   ];
 
   imagesToPreload.forEach((imageSrc) => {
@@ -105,15 +123,65 @@ const preloadSound = (soundPath) => {
   audio.load();
 };
 
-export default function ImageOverlay() {
+export default function ImageOverlay({
+  initialContainerIndex = null,
+  onReturnToWelcome,
+}) {
   const [currentSlot, setCurrentSlot] = useState(0); // 0-9 slots
   const [currentImageInSlot, setCurrentImageInSlot] = useState(0); // 0-2 images per slot
   const [scrollDirection, setScrollDirection] = useState("right"); // Track direction
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [countdownValue, setCountdownValue] = useState(null);
   const containerRef = useRef(null);
   const prevSlotRef = useRef(0);
   const audioRef = useRef(null);
+  const countdownTimerRef = useRef(null);
+  const countdownHideTimerRef = useRef(null);
+  const inactivityTimerRef = useRef(null);
+
+  const resetInactivityTimer = () => {
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+
+    inactivityTimerRef.current = setTimeout(() => {
+      if (onReturnToWelcome) {
+        onReturnToWelcome();
+      }
+    }, INACTIVITY_TIMEOUT);
+  };
+
+  const startCountdown = () => {
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+    }
+    if (countdownHideTimerRef.current) {
+      clearTimeout(countdownHideTimerRef.current);
+      countdownHideTimerRef.current = null;
+    }
+
+    let nextValue = COUNTDOWN_START;
+    setCountdownValue(nextValue);
+
+    countdownTimerRef.current = setInterval(() => {
+      nextValue -= 1;
+
+      if (nextValue >= 0) {
+        setCountdownValue(nextValue);
+        return;
+      }
+
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+      setCountdownValue("Go");
+
+      countdownHideTimerRef.current = setTimeout(() => {
+        setCountdownValue(null);
+        countdownHideTimerRef.current = null;
+      }, GO_DISPLAY_DURATION);
+    }, COUNTDOWN_INTERVAL);
+  };
 
   // Initialize audio element
   useEffect(() => {
@@ -129,6 +197,18 @@ export default function ImageOverlay() {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
+      }
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+        countdownTimerRef.current = null;
+      }
+      if (countdownHideTimerRef.current) {
+        clearTimeout(countdownHideTimerRef.current);
+        countdownHideTimerRef.current = null;
+      }
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
       }
     };
   }, []);
@@ -194,6 +274,8 @@ export default function ImageOverlay() {
     }
     // Preload first container images immediately
     preloadImagesBatch(0);
+    // Start inactivity timeout as soon as overlay is shown
+    resetInactivityTimer();
   }, []);
 
   // Auto-rotate ONLY object images (1st, 2nd, 3rd) with configurable delay
@@ -210,9 +292,9 @@ export default function ImageOverlay() {
   const currentObjectImages = useMemo(() => {
     const basePath = CONTAINERS[currentSlot].folder;
     return [
-      `${basePath}/1st.PNG`,
-      `${basePath}/2nd.PNG`,
-      `${basePath}/3rd.PNG`,
+      `${basePath}/1st.webp`,
+      `${basePath}/2nd.webp`,
+      `${basePath}/3rd.webp`,
     ];
   }, [currentSlot]);
 
@@ -254,23 +336,17 @@ export default function ImageOverlay() {
   // Keyboard navigation - ONLY numbers 0-9 allowed
   useEffect(() => {
     const handleKeyDown = (event) => {
-      const key = event.key;
-
       // STRICT MODE: Only allow 0-9. Block everything else (except system combos if OS intercepts them, but we try to block checks here)
       // Note: We cannot block Windows system keys like Ctrl+Alt+Del or Alt+Tab via JS, but we can block app shortcuts.
+      const containerIndex = getContainerIndexFromKeyEvent(event);
 
-      if ((key >= "1" && key <= "9") || key === "0") {
+      if (containerIndex !== null) {
         event.preventDefault(); // Good practice to prevent scrolling or other default actions if any
+        startCountdown();
+        resetInactivityTimer();
 
-        let containerIndex;
-        if (key === "0") {
-          containerIndex = 9;
-        } else {
-          containerIndex = parseInt(key) - 1;
-        }
-        
         // Only update if changing to a different slot
-        // if (containerIndex === currentSlot) return; 
+        // if (containerIndex === currentSlot) return;
 
         // Determine scroll direction
         if (containerIndex > prevSlotRef.current) {
@@ -293,19 +369,46 @@ export default function ImageOverlay() {
         // Block all other keys
         event.preventDefault();
         event.stopPropagation();
+        if (onReturnToWelcome) {
+          onReturnToWelcome();
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [onReturnToWelcome]);
+
+  useEffect(() => {
+    if (initialContainerIndex === null) {
+      return;
+    }
+
+    startCountdown();
+    resetInactivityTimer();
+
+    if (initialContainerIndex > prevSlotRef.current) {
+      setScrollDirection("right");
+    } else if (initialContainerIndex < prevSlotRef.current) {
+      setScrollDirection("left");
+    }
+
+    setCurrentSlot(initialContainerIndex);
+    prevSlotRef.current = initialContainerIndex;
+    preloadImagesBatch(initialContainerIndex);
+
+    const nextIndex = (initialContainerIndex + 1) % CONTAINERS.length;
+    if (CONTAINERS[nextIndex].sound) {
+      preloadSound(CONTAINERS[nextIndex].sound);
+    }
+  }, [initialContainerIndex]);
 
   return (
     <div className="overlay-root" ref={containerRef} tabIndex={0}>
       {/* STATIC CONTENT IMAGE - Changes per container but doesn't rotate */}
       <div className={`layer content scroll-${scrollDirection}`}>
         <img
-          src={`${CONTAINERS[currentSlot].folder}/T_Content.PNG`}
+          src={`${CONTAINERS[currentSlot].folder}/T_Content.webp`}
           alt={`${CONTAINERS[currentSlot].name} Content`}
         />
       </div>
@@ -325,13 +428,28 @@ export default function ImageOverlay() {
       {/* STATIC FRAME IMAGE - Changes per container but doesn't rotate */}
       <div className={`layer frame scroll-${scrollDirection}`}>
         <img
-          src={`${CONTAINERS[currentSlot].folder}/T_Frame.PNG`}
+          src={`${CONTAINERS[currentSlot].folder}/T_Frame.webp`}
           alt={`${CONTAINERS[currentSlot].name} Frame`}
         />
       </div>
 
-      <div className="sound-indicator">
-      </div>
+      {countdownValue !== null && (
+        <div
+          className={`countdown-indicator ${countdownValue === "Go" ? "go" : ""}`}
+          aria-live="polite"
+        >
+          {countdownValue === "Go" ? (
+            <span className="countdown-go-text">Go</span>
+          ) : (
+            <>
+              <span className="countdown-label">Wait</span>
+              <span className="countdown-number">{countdownValue}</span>
+            </>
+          )}
+        </div>
+      )}
+
+      <div className="sound-indicator"></div>
     </div>
   );
 }
