@@ -17,6 +17,14 @@ export default function WelcomeScreen({ onStart }) {
     };
 
     const handleStart = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (window.electronAPI) {
+          window.electronAPI.quitApp();
+        }
+        return;
+      }
+
       const containerIndex = getContainerIndexFromKeyEvent(event);
 
       if (containerIndex === null) {
@@ -42,7 +50,7 @@ export default function WelcomeScreen({ onStart }) {
         src="/images/WelcomeScreen.webp"
         alt="Welcome"
       />
-      <p className="welcome-hint">Press number Any Paw Mark to start</p>
+      <p className="welcome-hint">Press Any Paw Mark to start</p>
     </section>
   );
 }

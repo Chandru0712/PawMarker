@@ -21,16 +21,18 @@
   top: 50%;
   transform: translate(-50%, -50%);
   margin: 0;
-  padding: 0.65rem 1.1rem;
+  padding: 0.65rem 1.5rem;
   font-size: 3rem;
   color: #f8dba2;
   background: rgba(54, 33, 16, 0.72);
   border: 1px solid rgba(226, 177, 90, 0.7);
-  border-radius: 999px;
+  border-radius: 1.5rem;
   letter-spacing: 0.02em;
   pointer-events: none;
   text-transform: uppercase;
   font-weight: 700;
+  text-align: center;
+  max-width: 80vw;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
   animation:
     hintPulse 1.8s ease-in-out infinite,

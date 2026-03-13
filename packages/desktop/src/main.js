@@ -60,6 +60,10 @@ ipcMain.handle("get-app-path", () => {
   return app.getAppPath();
 });
 
+ipcMain.handle("quit-app", () => {
+  app.quit();
+});
+
 // Create application menu
 const createMenu = () => {
   const template = [

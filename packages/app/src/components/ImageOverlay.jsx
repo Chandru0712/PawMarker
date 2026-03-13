@@ -369,7 +369,11 @@ export default function ImageOverlay({
         // Block all other keys
         event.preventDefault();
         event.stopPropagation();
-        if (onReturnToWelcome) {
+        if (event.key === "Escape") {
+          if (window.electronAPI) {
+            window.electronAPI.quitApp();
+          }
+        } else if (onReturnToWelcome) {
           onReturnToWelcome();
         }
       }

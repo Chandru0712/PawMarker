@@ -1,6 +1,7 @@
 @echo off
 REM Android APK build script for PawMarker
 REM Prerequisites: Android SDK, JDK 11+, Gradle
+set ROOT_DIR=%~dp0
 
 echo Building PawMarker APK...
 
@@ -28,8 +29,8 @@ if %ERRORLEVEL% EQU 0 (
     echo.
     echo ✓ APK build successful!
     echo.
-    copy packages\mobile\android\app\build\outputs\apk\debug\app-debug.apk PawMarker-debug.apk
-    echo Copied to project root: PawMarker-debug.apk
+    copy app\build\outputs\apk\debug\app-debug.apk "%ROOT_DIR%PawMarker.apk" /Y
+    echo Copied to project root: PawMarker.apk
 ) else (
     echo.
     echo ✗ APK build failed. Check the errors above.
