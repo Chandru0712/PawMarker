@@ -1,9 +1,11 @@
 const { app, BrowserWindow, Menu, ipcMain } = require("electron");
 const path = require("path");
+const { URL } = require("url");
 
 const isDev = process.env.NODE_ENV === "development";
 
 let mainWindow;
+let startUrl;
 
 const createWindow = () => {
   mainWindow = new BrowserWindow({
@@ -15,15 +17,37 @@ const createWindow = () => {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      sandbox: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      experimentalFeatures: false,
       preload: path.join(__dirname, "preload.js"),
     },
   });
 
-  const startUrl = isDev
+  startUrl = isDev
     ? "http://localhost:5173"
     : `file://${path.join(__dirname, "../app/dist/index.html")}`;
 
   mainWindow.loadURL(startUrl);
+
+  // Deny all window.open() calls. This is a kiosk app with no external links.
+  mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+
+  // Block any navigation away from the start URL. Prevents a compromised
+  // renderer (or a future stray <a href="...">) from navigating the app
+  // to an attacker-controlled origin.
+  mainWindow.webContents.on("will-navigate", (event, targetUrl) => {
+    try {
+      const target = new URL(targetUrl);
+      const start = new URL(startUrl);
+      if (target.origin !== start.origin || target.pathname !== start.pathname) {
+        event.preventDefault();
+      }
+    } catch {
+      event.preventDefault();
+    }
+  });
 
   // if (isDev) {
   //   mainWindow.webContents.openDevTools();
@@ -34,9 +58,20 @@ const createWindow = () => {
   });
 };
 
+// Defense-in-depth: refuse to attach <webview> tags and deny permission
+// requests for capabilities the app does not use (camera, mic, geolocation, ...).
+app.on("web-contents-created", (_event, contents) => {
+  contents.on("will-attach-webview", (event) => {
+    event.preventDefault();
+  });
+  contents.session.setPermissionRequestHandler((_wc, _permission, callback) => {
+    callback(false);
+  });
+});
+
 app.whenReady().then(() => {
   createWindow();
-  // Disable default menu
+  // Kiosk: no application menu in production.
   Menu.setApplicationMenu(null);
 });
 
@@ -64,8 +99,10 @@ ipcMain.handle("quit-app", () => {
   app.quit();
 });
 
-// Create application menu
-const createMenu = () => {
+// Development-only menu. In production the application menu stays null
+// (set in the main whenReady handler above) so DevTools / Reload / Copy /
+// Paste cannot be reached from the menu bar in a kiosk deployment.
+const createDevMenu = () => {
   const template = [
     {
       label: "File",
@@ -96,7 +133,7 @@ const createMenu = () => {
         { label: "Reload", accelerator: "CmdOrCtrl+R", role: "reload" },
         {
           label: "Toggle Developer Tools",
-          accelerator: isDev ? "CmdOrCtrl+Shift+I" : null,
+          accelerator: "CmdOrCtrl+Shift+I",
           click: () => {
             mainWindow?.webContents.toggleDevTools();
           },
@@ -108,6 +145,8 @@ const createMenu = () => {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 };
 
-app.whenReady().then(() => {
-  createMenu();
-});
+if (isDev) {
+  app.whenReady().then(() => {
+    createDevMenu();
+  });
+}

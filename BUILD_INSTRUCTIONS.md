@@ -63,16 +63,39 @@ apksigner verify PawMarker-release-signed.apk
 
 ### Option 3: Configure Automatic Signing in Gradle
 
+**Do NOT commit keystore passwords or paths to source control.** Load them
+from a gitignored `keystore.properties` file or from environment variables.
+
+Create `packages/mobile/android/keystore.properties` (already covered by
+`.gitignore` as `key.properties` — add `keystore.properties` too if you
+prefer that filename):
+
+```properties
+storeFile=/absolute/path/to/pawmarker.keystore
+storePassword=${KEYSTORE_PASSWORD}
+keyAlias=${KEY_ALIAS}
+keyPassword=${KEY_PASSWORD}
+```
+
 Edit `packages/mobile/android/app/build.gradle`:
 
 ```groovy
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     signingConfigs {
         release {
-            storeFile file("path/to/your/keystore.jks")
-            storePassword "your-store-password"
-            keyAlias "your-key-alias"
-            keyPassword "your-key-password"
+            // Values resolve from keystore.properties, which in turn
+            // references environment variables. Never hardcode the
+            // real password / alias in a tracked file.
+            storeFile file(keystoreProperties["storeFile"] ?: System.getenv("KEYSTORE_FILE"))
+            storePassword keystoreProperties["storePassword"] ?: System.getenv("KEYSTORE_PASSWORD")
+            keyAlias keystoreProperties["keyAlias"] ?: System.getenv("KEY_ALIAS")
+            keyPassword keystoreProperties["keyPassword"] ?: System.getenv("KEY_PASSWORD")
         }
     }
 
@@ -86,7 +109,14 @@ android {
 }
 ```
 
-Then rebuild with: `.\gradlew assembleRelease`
+Then export the credentials in your shell / CI job and rebuild:
+
+```bash
+export KEYSTORE_PASSWORD=...   # never commit this
+export KEY_ALIAS=...
+export KEY_PASSWORD=...
+./gradlew assembleRelease
+```
 
 ---
 
