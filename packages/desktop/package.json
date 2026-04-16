@@ -15,6 +15,8 @@
   "build": {
     "appId": "com.pawmarker.app",
     "productName": "PawMarker",
+    "electronVersion": "27.3.11",
+    "npmRebuild": false,
     "files": [
       "src/**/*",
       "package.json",
@@ -32,7 +34,7 @@
     "win": {
       "target": [
         "portable",
-        "installer"
+        "nsis"
       ]
     },
     "portable": {
