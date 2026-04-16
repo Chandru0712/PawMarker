@@ -119,14 +119,15 @@ body {
 
 .countdown-indicator {
   position: fixed;
-  right: 2rem;
-  bottom: 2rem;
+  right: 6rem;
+  bottom: 6rem;
   z-index: 9999;
-  min-width: 8rem;
-  padding: 1.25rem 1.5rem;
+  width: 15rem;
+  height: 13rem;
+  padding: 1rem;
   border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.4);
-  background: rgba(0, 0, 0, 0.42);
+  background: #ffc000;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
@@ -138,11 +139,14 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0.15rem;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .countdown-label {
-  font-size: 1.15rem;
+  font-size: 1.35rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -150,32 +154,21 @@ body {
 }
 
 .countdown-number {
-  font-size: 4.6rem;
+  font-size: 6.2rem;
   font-weight: 700;
 }
 
 .countdown-go-text {
-  font-size: 4.2rem;
+  font-size: 6rem;
   font-weight: 800;
   line-height: 1;
   text-transform: uppercase;
 }
 
 .countdown-indicator.go {
-  border-color: rgba(70, 255, 130, 0.7);
-  background: rgba(10, 60, 25, 0.46);
-  box-shadow: 0 12px 32px rgba(48, 230, 108, 0.28);
-  justify-content: center;
-  min-height: 8rem;
-}
-
-.countdown-indicator.go .countdown-label,
-.countdown-indicator.go .countdown-number {
-  color: #93ffb7;
-}
-
-.countdown-indicator.go .countdown-go-text {
-  color: #93ffb7;
+  border-color: rgba(255, 255, 255, 0.4);
+  background: #ffc000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
 .sound-button {
@@ -320,5 +313,4 @@ img {
   -khtml-user-drag: none;
   -moz-user-drag: none;
   -o-user-drag: none;
-  user-drag: none;
 }
